@@ -104,7 +104,7 @@ class Direct_Messenger_GUI:
         self.send_button = tk.Button(self.master, text= 'Send', width= 15, command= self.send_msg)
         self.send_button.grid(row= 4, column= 1, sticky= 'nes', padx= 5, pady= 3)
 
-        self.master.after(1000, self.__update_new_msg)
+        self.master.after(1000, self.__update_user)
 
     def show_history(self): #Show the msg history when user's friend is selected
         if self.friend_listbox.size() == 0: return
@@ -159,16 +159,19 @@ class Direct_Messenger_GUI:
         
         self.msg_box.delete('1.0', tk.END)
 
-    def __update_new_msg(self): #Get new messages to update
+    def __update_user(self): #Get new messages to update
         new_msgs = self.user_messenger.retrieve_new()
         self.__add_DirectMessage(direct_msgs= new_msgs)
-        self.master.after(1000, self.__update_new_msg) #recursive call the function to keep getting new msg
+        self.master.after(1000, self.__update_user) #recursive call the function to keep getting new msg
 
     
     def __add_DirectMessage(self, direct_msgs : list[dm.DirectMessage]): #Add new msg to user profile
         for msg in direct_msgs:
-            self.user_profile.add_friend(username= msg.sender)
+            if msg.sender not in self.user_profile.friends:
+                self.friend_listbox.insert(tk.END, msg.sender)
+                self.user_profile.add_friend(username= msg.sender)
             self.user_profile.add_direct_message(direct_msg= msg)
+
         if self.friend_listbox.curselection(): #update the current msg_history if any is selected
             self.show_history()
 

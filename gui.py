@@ -14,44 +14,42 @@ class Friends:
 class Direct_Messenger_GUI:
     def __init__(self, master : tk.Tk) -> None:
         self.master = master
+        self.ip = "168.235.86.101"
 
         #creating login screen
         self.master.withdraw()
         self.login_wn = tk.Toplevel(master= self.master)
         self.login_wn.title('Login')
         self.login_wn.resizable(0,0)
-        self.login_wn.geometry('200x120')
+        self.login_wn.geometry('200x100')
         self.login_wn.bind('<Escape>', func= lambda _: self.master.quit())
 
         #Creating widget
         self.name = tk.Label(self.login_wn, text= 'Username: ')
         self.password = tk.Label(self.login_wn, text= 'Password: ')
-        self.ip = tk.Label(self.login_wn, text= 'Server IP:')
         self.name_entry = tk.Entry(self.login_wn, )
         self.password_entry = tk.Entry(self.login_wn, show= '*')
-        self.ip_entry = tk.Entry(self.login_wn)
         self.login_button = tk.Button(self.login_wn, text= 'Login', command= self.create_user)
 
         #placing widget
         widget : tk.Widget
         count : int
         for count, widget in enumerate(self.login_wn.winfo_children()):
-            widget.grid(row= count % 3, column= count //3)
-        self.login_button.grid(row= 3, column= 0, columnspan= 2)
+            widget.grid(row= count % 2, column= count //2)
+        self.login_button.grid(row= 2, column= 0, columnspan= 2)
 
     def create_user(self): #Getting the info from login screen and create messenger and profile 
-        username, password, ip = self.name_entry.get(), self.password_entry.get(), self.ip_entry.get()
+        username, password = self.name_entry.get(), self.password_entry.get()
         self.name_entry.delete(0, tk.END) 
         self.password_entry.delete(0, tk.END)
-        self.ip_entry.delete(0, tk.END)
-        self.user_messenger = dm.DirectMessenger(dsuserver= ip, username= username, password= password)
+        self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
 
         if self.user_messenger.error: #Show error msg if cannot create direct messenger
             self.error_msg = tk.Label(self.login_wn, text= self.user_messenger.error)
             self.error_msg.grid(row= 4, column= 0, columnspan= 2)
             return
 
-        self.user_profile = Profile(dsuserver= ip, username= username, password= password) #Create a user profile and load it
+        self.user_profile = Profile(dsuserver= self.ip, username= username, password= password) #Create a user profile and load it
         self.user_profile.load_profile()
         self.start_chat()#Starts up the actual GUI
 

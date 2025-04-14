@@ -15,6 +15,7 @@ class Direct_Messenger_GUI:
     def __init__(self, master : tk.Tk) -> None:
         self.master = master
         self.ip = "168.235.86.101"
+        self.unread_msgs = {}
 
         #creating login screen
         self.master.withdraw()
@@ -104,9 +105,8 @@ class Direct_Messenger_GUI:
 
         self.master.after(1000, self.__update_user)
 
-    def show_history(self): #Show the msg history when user's friend is selected
-        if self.friend_listbox.size() == 0: return
-        name = self.friend_listbox.get(self.friend_listbox.curselection())
+    def show_history(self, name = ""): #Show the msg history when user's friend is selected
+        if not name: return
         self.msg_history.config(state= tk.NORMAL)
         self.msg_history.delete('1.0', tk.END)
         for msgs in self.user_profile.friends[name]:
@@ -165,13 +165,14 @@ class Direct_Messenger_GUI:
     
     def __add_DirectMessage(self, direct_msgs : list[dm.DirectMessage]): #Add new msg to user profile
         for msg in direct_msgs:
-            if msg.sender not in self.user_profile.friends:
-                self.friend_listbox.insert(tk.END, msg.sender)
-                self.user_profile.add_friend(username= msg.sender)
+            sender = msg.sender
+            if sender not in self.user_profile.friends:
+                self.friend_listbox.insert(tk.END, sender)
+                self.user_profile.add_friend(username= sender)
             self.user_profile.add_direct_message(direct_msg= msg)
 
-        if self.friend_listbox.curselection(): #update the current msg_history if any is selected
-            self.show_history()
+        self.show_history(self.friend_listbox.get(self.friend_listbox.curselection())) #Load the chat logs of the selected friend
+        #upda
 
 def main():
     wn = tk.Tk()

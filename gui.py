@@ -2,6 +2,7 @@ import tkinter as tk
 import ds_messenger as dm
 from Profile import Profile
 import time as t
+from datetime import datetime as dt
 
 class Friends:
     def __init__(self, name : str, messages : list[dict]) -> None:
@@ -112,7 +113,14 @@ class Direct_Messenger_GUI:
         for msgs in self.user_profile.friends[name]:
             msg = msgs['message']
             sender = msgs['from']
-            self.msg_history.insert(tk.END, f'{sender}: {msg}\n\n')
+            time = dt.fromtimestamp(msgs['time']).strftime('%Y-%m-%d %H:%M:%S')
+            if sender == self.user_profile.username:
+                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
+                self.msg_history.insert(tk.END, formatted_msg, "right")
+        else:
+            formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
+            self.msg_history.insert(tk.END, formatted_msg, "left")
+
         self.msg_history.config(state= tk.DISABLED)
 
     def add_friend_popup(self): #Create a pop for user to enter friend's usernamme
@@ -171,7 +179,9 @@ class Direct_Messenger_GUI:
                 self.user_profile.add_friend(username= sender)
             self.user_profile.add_direct_message(direct_msg= msg)
 
-        self.show_history(self.friend_listbox.get(self.friend_listbox.curselection())) #Load the chat logs of the selected friend
+        if self.friend_listbox.size() > 0:
+            name = self.friend_listbox.get(self.friend_listbox.curselection())
+            self.show_history(name) #Load the chat logs of the selected friend
         #upda
 
 def main():

@@ -8,7 +8,7 @@ class DirectMessage:
         self.recipient = recipient
         self.sender = sender
         self.message = message
-        self.timestamp = timestamp
+        self.timestamp = float(timestamp)
         
 class DirectMessenger:
     def __init__(self, dsuserver : str = None, username : str = None, password : str = None):

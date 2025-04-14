@@ -42,15 +42,15 @@ class Direct_Messenger_GUI:
 
     def create_user(self): #Getting the info from login screen and create messenger and profile 
         username, password = self.name_entry.get(), self.password_entry.get()
-        self.name_entry.delete(0, tk.END) 
-        self.password_entry.delete(0, tk.END)
         self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
 
         if self.user_messenger.error: #Show error msg if cannot create direct messenger
-            self.error_msg = tk.Label(self.login_wn, text= self.user_messenger.error)
-            self.error_msg.grid(row= 4, column= 0, columnspan= 2)
+            self.error_msg = tk.Label(self.login_wn, text= self.user_messenger.error, wraplength= 200)
+            self.error_msg.grid(row= 3, column= 0, columnspan= 2)
             return
 
+        self.name_entry.delete(0, tk.END) 
+        self.password_entry.delete(0, tk.END)
         self.user_profile = Profile(dsuserver= self.ip, username= username, password= password) #Create a user profile and load it
         self.user_profile.load_profile()
         self.start_chat()#Starts up the actual GUI
@@ -88,6 +88,9 @@ class Direct_Messenger_GUI:
         self.msg_history.grid(row= 0, rowspan= 3, column= 1, 
                             sticky= 'ns',padx= 2,  pady= 5)
         self.msg_history.config(state= tk.DISABLED)
+        self.msg_history.tag_configure("right", justify="right")
+        self.msg_history.tag_configure("left", justify="left")
+
 
         #message box
         self.msg_box = tk.Text(self.master, wrap= tk.WORD, height= 5, width= 40,
@@ -113,7 +116,7 @@ class Direct_Messenger_GUI:
         for msgs in self.user_profile.friends[name]:
             msg = msgs['message']
             sender = msgs['from']
-            time = dt.fromtimestamp(msgs['time']).strftime('%Y-%m-%d %H:%M:%S')
+            time = dt.fromtimestamp(msgs['time']).strftime('%A %H:%M')
             if sender == self.user_profile.username:
                 formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
                 self.msg_history.insert(tk.END, formatted_msg, "right")
@@ -179,8 +182,9 @@ class Direct_Messenger_GUI:
                 self.user_profile.add_friend(username= sender)
             self.user_profile.add_direct_message(direct_msg= msg)
 
-        if self.friend_listbox.size() > 0:
-            name = self.friend_listbox.get(self.friend_listbox.curselection())
+        selection = self.friend_listbox.curselection()
+        if self.friend_listbox.size() > 0 and selection:
+            name = self.friend_listbox.get(selection)
             self.show_history(name) #Load the chat logs of the selected friend
         #upda
 

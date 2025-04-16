@@ -36,16 +36,41 @@ class Profile:
                 port=os.getenv('DB_PORT'))
             self.conn.autocommit = True
             self.cursor = self.conn.cursor()
+            self.__create_tables()
         except Exception as e:
             raise DsuFileError("Error while attempting to connect to the database.", e)
 
+    def __create_tables(self):
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            username VARCHAR PRIMARY KEY,
+            password VARCHAR NOT NULL,
+        );
+        """)
 
-    "add_friend will add a friend to friends list if they are not already in it"
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS friends (
+            username VARCHAR,
+            friend VARCHAR,
+            PRIMARY KEY (username, friend)
+        );
+        """)
 
-    def add_friend(self, username : str) -> None:
-        if username not in self.friends:
-            self.friends[username] = []
-            self.save_profile()
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY,
+            sender VARCHAR,
+            recipient VARCHAR,
+            message TEXT,
+            timestamp TIMESTAMP
+        );
+        """)
+
+    def add_friend(self, friend : str) -> None:
+        self.cursor.execute("""
+        INSERT INTO friends (username, friend) 
+        VALUES (%s, %s) 
+        ON CONLFICT DO NOTHING""", (self.username, friend))
 
     def add_direct_message(self, direct_msg : DirectMessage) -> None:
         if direct_msg.sender == self.username:

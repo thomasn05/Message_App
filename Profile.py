@@ -1,12 +1,14 @@
 import json
 from pathlib import Path
 from ds_messenger import DirectMessage
+import psycopg2
+import os
+from dotenv import load_dotenv
 
 
 """
 DsuFileError is a custom exception handler that you should catch in your own code. It
 is raised when attempting to load or save Profile objects to file the system.
-
 """
 class DsuFileError(Exception):
     pass
@@ -14,31 +16,29 @@ class DsuFileError(Exception):
 """
 DsuProfileError is a custom exception handler that you should catch in your own code. It
 is raised when attempting to deserialize a dsu file to a Profile object.
-
 """
 class DsuProfileError(Exception):
     pass
 
 class Profile:
-    """
-    The Profile class exposes the properties required to join an ICS 32 DSU server. You 
-    will need to use this class to manage the information provided by each new user 
-    created within your program for a2. Pay close attention to the properties and 
-    functions in this class as you will need to make use of each of them in your program.
-
-    When creating your program you will need to collect user input for the properties 
-    exposed by this class. A Profile class should ensure that a username and password 
-    are set, but contains no conventions to do so. You should make sure that your code 
-    verifies that required properties are set.
-
-    """
-
     def __init__(self, dsuserver : str = None, username : str = None, password : str = None):
         self.dsuserver = dsuserver # REQUIRED
         self.username = username # REQUIRED
         self.password = password # REQUIRED
-        self.friends =  {}
-        self.path = f'{self.username}.dsu'
+        
+        load_dotenv()
+        try:
+            self.conn = psycopg2.connect(
+                dbname=os.getenv('DB_NAME'), 
+                user=os.getenv('DB_USER'), 
+                password=os.getenv('DB_PASSWORD'), 
+                host=os.getenv('DB_HOST'), 
+                port=os.getenv('DB_PORT'))
+            self.conn.autocommit = True
+            self.cursor = self.conn.cursor()
+        except Exception as e:
+            raise DsuFileError("Error while attempting to connect to the database.", e)
+
 
     "add_friend will add a friend to friends list if they are not already in it"
 

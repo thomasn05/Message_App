@@ -73,59 +73,36 @@ class Profile:
         ON CONLFICT DO NOTHING""", (self.username, friend))
 
     def add_direct_message(self, direct_msg : DirectMessage) -> None:
-        if direct_msg.sender == self.username:
-            friend = direct_msg.recipient
-        else:
-            friend = direct_msg.sender
-        self.friends[friend].append({'from': direct_msg.sender, 'to': direct_msg.recipient, 'message' : direct_msg.message, 'time' : direct_msg.timestamp})
-        self.save_profile()
+        self.cursor.execute("""
+        INSERT INTO messages (sender, recipient, message, timestamp)
+        VALUES (%s, %s, %s, %s)""", (direct_msg.sender, direct_msg.recipient, direct_msg.message, direct_msg.timestamp))
 
-    """
-
-    save_profile accepts an existing dsu file to save the current instance of Profile 
-    to the file system.
-
-    Example usage:
-
-    profile = Profile()
-    profile.save_profile('/path/to/file.dsu')
-
-    Raises DsuFileError
-
-    """
     def save_profile(self) -> None:
-        p = Path(self.path)
+        self.cursor.execute("""
+        INSERT INTO users (username, password)
+        VALUES (%s, %s)
+        ON CONFLICT DO NOTHING""", (self.username, self.password))
 
-        try:
-            f = open(p, 'w')
-            json.dump(self.__dict__, f)
-            f.close()
-        except Exception as ex:
-            raise DsuFileError("Error while attempting to process the DSU file.", ex)
+    def get_friends(self) -> tuple:
+        self.cursor.execute("""
+        SELECT friend FROM friends WHERE username = %s""", (self.username,))
+        return self.cursor.fetchall()
+    
+    def get_messages(self, friend: str) -> list[dict]:
+        self.cursor.execute("""
+        SELECT sender, recipient, message, timestamp
+        FROM messages
+        WHERE (sender = %s AND recipient = %s)
+        OR (sender = %s AND recipient = %s)
+        ORDER BY timestamp;
+        """, (self.username, friend, friend, self.username))
+        return [
+            DirectMessage(
+                sender=msg[0],
+                recipient=msg[1],
+                message=msg[2],
+                timestamp=msg[3]
+            )
+            for msg in self.cursor.fetchall()
+        ]
 
-    """
-
-    load_profile will populate the current instance of Profile with data stored in a 
-    DSU file.
-
-    Example usage: 
-
-    profile = Profile()
-    profile.load_profile('/path/to/file.dsu')
-
-    Raises DsuProfileError, DsuFileError
-
-    """
-    def load_profile(self) -> bool:
-        p = Path(self.path)
-
-        if p.exists():
-            f = open(p, 'r')
-            obj = json.load(f)
-            self.username = obj['username']
-            self.password = obj['password']
-            self.dsuserver = obj['dsuserver']
-            self.friends = obj['friends']
-            f.close()
-            return 1
-        return 0

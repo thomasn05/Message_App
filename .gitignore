@@ -1,3 +1,4 @@
 *.dsu
 .vscode
 __pycache__/
+.env

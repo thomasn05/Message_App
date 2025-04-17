@@ -124,9 +124,9 @@ class Direct_Messenger_GUI:
             if sender == self.user_profile.username:
                 formatted_msg = f"{sender} @ {time}\n{d}\n\n"
                 self.msg_history.insert(tk.END, formatted_msg, "right")
-        else:
-            formatted_msg = f"{sender} @ {time}\n{d}\n\n"
-            self.msg_history.insert(tk.END, formatted_msg, "left")
+            else:
+                formatted_msg = f"{sender} @ {time}\n{d}\n\n"
+                self.msg_history.insert(tk.END, formatted_msg, "left")
 
         self.msg_history.config(state= tk.DISABLED)
 

@@ -8,7 +8,11 @@ class Friends:
         self.name = name
         self.messages = []
         for msg in messages:
-            self.messages.append(dm.DirectMessage(recipient= msg['to'], sender= msg['from'], message= msg['message'], timestamp= msg['time']))
+            self.messages.append(dm.DirectMessage(
+                recipient= msg['to'], 
+                sender= msg['from'], 
+                message= msg['message'], 
+                timestamp= msg['time']))
 
 
 class Direct_Messenger_GUI:
@@ -43,6 +47,7 @@ class Direct_Messenger_GUI:
         username, password, ip = self.name_entry.get(), self.password_entry.get(), self.ip_entry.get()
         self.name_entry.delete(0, tk.END) 
         self.password_entry.delete(0, tk.END)
+<<<<<<< HEAD
         self.ip_entry.delete(0, tk.END)
         self.user_messenger = dm.DirectMessenger(dsuserver= ip, username= username, password= password)
 
@@ -53,6 +58,9 @@ class Direct_Messenger_GUI:
 
         self.user_profile = Profile(dsuserver= ip, username= username, password= password) #Create a user profile and load it
         self.user_profile.load_profile()
+=======
+        self.user_profile = Profile(dsuserver= self.ip, username= username, password= password) #Create a user profile
+>>>>>>> a36840cb3feb01bcf70e92f7f2f9511f0ebefcde
         self.start_chat()#Starts up the actual GUI
 
     def start_chat(self): #Actual chat GUI
@@ -79,7 +87,7 @@ class Direct_Messenger_GUI:
                                 sticky= 'nes', pady= 5)
         self.friend_listbox.bind('<<ListboxSelect>>', lambda _ : self.show_history())
 
-        for friend in self.user_profile.friends:
+        for friend in self.user_profile.get_friends(): #Get the friends from the profile and add to listbox
             self.friend_listbox.insert(tk.END, friend)
 
         #messages history
@@ -111,10 +119,25 @@ class Direct_Messenger_GUI:
         name = self.friend_listbox.get(self.friend_listbox.curselection())
         self.msg_history.config(state= tk.NORMAL)
         self.msg_history.delete('1.0', tk.END)
+<<<<<<< HEAD
         for msgs in self.user_profile.friends[name]:
             msg = msgs['message']
             sender = msgs['from']
             self.msg_history.insert(tk.END, f'{sender}: {msg}\n\n')
+=======
+        d : dm.DirectMessage
+        for d in self.user_profile.get_messages(friend= name): #Get the msg history from the profile
+            msg = d.message
+            sender = d.sender
+            time = d.timestamp.strftime('%A %H:%M')
+            if sender == self.user_profile.username:
+                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
+                self.msg_history.insert(tk.END, formatted_msg, "right")
+            else:
+                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
+                self.msg_history.insert(tk.END, formatted_msg, "left")
+
+>>>>>>> a36840cb3feb01bcf70e92f7f2f9511f0ebefcde
         self.msg_history.config(state= tk.DISABLED)
 
     def add_friend_popup(self): #Create a pop for user to enter friend's usernamme
@@ -130,11 +153,19 @@ class Direct_Messenger_GUI:
 
     def add_friend(self): #Add the friend to profile and listbox
         friend = self.add_friend_entry.get()
+        if friend == self.user_profile.username: #Check if user is trying to add himself
+            error_popup = tk.Toplevel(master= self.master)
+            error_label = tk.Label(master=error_popup, text= 'Cannot add yourself')
+            error_label.grid(row= 0, column= 0)
+            ok_button = tk.Button(master= error_popup, text= 'OK', command= error_popup.destroy)
+            ok_button.grid(row= 1, column= 0, columnspan= 2)
+            return
+
         self.add_friend_entry.delete(0, tk.END)
-        if friend not in self.user_profile.friends:
+        if friend not in self.user_profile.get_friends():
             self.add_friend_wn.destroy()
             self.friend_listbox.insert(tk.END, friend)
-        self.user_profile.add_friend(username= friend)
+            self.user_profile.add_friend(friend= friend)
     
     def send_msg(self): #send the msg to other user
         msg = self.msg_box.get('1.0', 'end-1c')
@@ -167,10 +198,23 @@ class Direct_Messenger_GUI:
     
     def __add_DirectMessage(self, direct_msgs : list[dm.DirectMessage]): #Add new msg to user profile
         for msg in direct_msgs:
+<<<<<<< HEAD
             self.user_profile.add_friend(username= msg.sender)
             self.user_profile.add_direct_message(direct_msg= msg)
         if self.friend_listbox.curselection(): #update the current msg_history if any is selected
             self.show_history()
+=======
+            sender = msg.sender
+            if sender not in self.user_profile.get_friends():
+                self.friend_listbox.insert(tk.END, sender)
+                self.user_profile.add_friend(friend= sender)
+
+        selection = self.friend_listbox.curselection()
+        if self.friend_listbox.size() > 0 and selection:
+            name = self.friend_listbox.get(selection)
+            self.show_history(name) #Load the chat logs of the selected friend
+        #upda
+>>>>>>> a36840cb3feb01bcf70e92f7f2f9511f0ebefcde
 
 def main():
     wn = tk.Tk()

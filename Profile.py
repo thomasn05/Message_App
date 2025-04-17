@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Profile.py
 #
 # ICS 32
@@ -16,13 +17,18 @@
 #
 import json
 from pathlib import Path
+=======
+>>>>>>> a36840cb3feb01bcf70e92f7f2f9511f0ebefcde
 from ds_messenger import DirectMessage
+import psycopg2
+import os
+from datetime import datetime
+from dotenv import load_dotenv
 
 
 """
 DsuFileError is a custom exception handler that you should catch in your own code. It
 is raised when attempting to load or save Profile objects to file the system.
-
 """
 class DsuFileError(Exception):
     pass
@@ -30,93 +36,94 @@ class DsuFileError(Exception):
 """
 DsuProfileError is a custom exception handler that you should catch in your own code. It
 is raised when attempting to deserialize a dsu file to a Profile object.
-
 """
 class DsuProfileError(Exception):
     pass
 
 class Profile:
-    """
-    The Profile class exposes the properties required to join an ICS 32 DSU server. You 
-    will need to use this class to manage the information provided by each new user 
-    created within your program for a2. Pay close attention to the properties and 
-    functions in this class as you will need to make use of each of them in your program.
-
-    When creating your program you will need to collect user input for the properties 
-    exposed by this class. A Profile class should ensure that a username and password 
-    are set, but contains no conventions to do so. You should make sure that your code 
-    verifies that required properties are set.
-
-    """
-
     def __init__(self, dsuserver : str = None, username : str = None, password : str = None):
         self.dsuserver = dsuserver # REQUIRED
         self.username = username # REQUIRED
         self.password = password # REQUIRED
-        self.friends =  {}
-        self.path = f'{self.username}.dsu'
+        
+        load_dotenv()
+        try:
+            self.conn = psycopg2.connect(
+                dbname=os.getenv('DB_NAME'), 
+                user=os.getenv('DB_USER'), 
+                password=os.getenv('DB_PASSWORD'), 
+                host=os.getenv('DB_HOST'), 
+                port=os.getenv('DB_PORT'))
+            self.conn.autocommit = True
+            self.cursor = self.conn.cursor()
+            self.__create_tables()
+            self.__add_user()
+        except Exception as e:
+            raise DsuFileError("Error while attempting to connect to the database.", e)
 
-    "add_friend will add a friend to friends list if they are not already in it"
+    def __create_tables(self):
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            username VARCHAR PRIMARY KEY,
+            password VARCHAR NOT NULL
+        );
+        """)
 
-    def add_friend(self, username : str) -> None:
-        if username not in self.friends:
-            self.friends[username] = []
-            self.save_profile()
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS friends (
+            username VARCHAR,
+            friend VARCHAR,
+            PRIMARY KEY (username, friend)
+        );
+""")
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY,
+            sender VARCHAR,
+            recipient VARCHAR,
+            message TEXT,
+            timestamp TIMESTAMP
+        );
+        """)
+
+    def add_friend(self, friend : str) -> None:
+        self.cursor.execute("""
+        INSERT INTO friends (username, friend) 
+        VALUES (%s, %s) 
+        ON CONFLICT DO NOTHING""", (self.username, friend))
 
     def add_direct_message(self, direct_msg : DirectMessage) -> None:
-        if direct_msg.sender == self.username:
-            friend = direct_msg.recipient
-        else:
-            friend = direct_msg.sender
-        self.friends[friend].append({'from': direct_msg.sender, 'to': direct_msg.recipient, 'message' : direct_msg.message, 'time' : direct_msg.timestamp})
-        self.save_profile()
+        self.cursor.execute("""
+        INSERT INTO messages (sender, recipient, message, timestamp)
+        VALUES (%s, %s, %s, %s)""", (direct_msg.sender, direct_msg.recipient, direct_msg.message, datetime.fromtimestamp(direct_msg.timestamp)))
 
-    """
+    def __add_user(self) -> None:
+        self.cursor.execute("""
+        INSERT INTO users (username, password)
+        VALUES (%s, %s)
+        ON CONFLICT DO NOTHING""", (self.username, self.password))
 
-    save_profile accepts an existing dsu file to save the current instance of Profile 
-    to the file system.
+    def get_friends(self) -> tuple:
+        self.cursor.execute("""
+        SELECT friend FROM friends WHERE username = %s""", (self.username,))
+        return self.cursor.fetchall()
+    
+    def get_messages(self, friend: str) -> list[dict]:
+        self.cursor.execute("""
+        SELECT sender, recipient, message, timestamp
+        FROM messages
+        WHERE (sender = %s AND recipient = %s)
+        OR (sender = %s AND recipient = %s)
+        ORDER BY timestamp;
+        """, (self.username, friend, friend, self.username))
+        return [
+            DirectMessage(
+                sender=msg[0],
+                recipient=msg[1],
+                message=msg[2],
+                timestamp=msg[3]
+            )
+            for msg in self.cursor.fetchall()
+        ]
 
-    Example usage:
-
-    profile = Profile()
-    profile.save_profile('/path/to/file.dsu')
-
-    Raises DsuFileError
-
-    """
-    def save_profile(self) -> None:
-        p = Path(self.path)
-
-        try:
-            f = open(p, 'w')
-            json.dump(self.__dict__, f)
-            f.close()
-        except Exception as ex:
-            raise DsuFileError("Error while attempting to process the DSU file.", ex)
-
-    """
-
-    load_profile will populate the current instance of Profile with data stored in a 
-    DSU file.
-
-    Example usage: 
-
-    profile = Profile()
-    profile.load_profile('/path/to/file.dsu')
-
-    Raises DsuProfileError, DsuFileError
-
-    """
-    def load_profile(self) -> bool:
-        p = Path(self.path)
-
-        if p.exists():
-            f = open(p, 'r')
-            obj = json.load(f)
-            self.username = obj['username']
-            self.password = obj['password']
-            self.dsuserver = obj['dsuserver']
-            self.friends = obj['friends']
-            f.close()
-            return 1
-        return 0

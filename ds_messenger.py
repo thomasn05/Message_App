@@ -2,9 +2,10 @@ import socket as s
 from time import time
 import ds_protocol as dp
 import json
+import datetime
 
 class DirectMessage:
-    def __init__(self, recipient : str, sender : str,  message : str, timestamp : str):
+    def __init__(self, recipient : str, sender : str,  message : str, timestamp : datetime):
         self.recipient = recipient
         self.sender = sender
         self.message = message

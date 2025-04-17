@@ -8,7 +8,11 @@ class Friends:
         self.name = name
         self.messages = []
         for msg in messages:
-            self.messages.append(dm.DirectMessage(recipient= msg['to'], sender= msg['from'], message= msg['message'], timestamp= msg['time']))
+            self.messages.append(dm.DirectMessage(
+                recipient= msg['to'], 
+                sender= msg['from'], 
+                message= msg['message'], 
+                timestamp= msg['time']))
 
 
 class Direct_Messenger_GUI:
@@ -40,15 +44,16 @@ class Direct_Messenger_GUI:
 
     def create_user(self): #Getting the info from login screen and create messenger and profile 
         username, password = self.name_entry.get(), self.password_entry.get()
-        self.name_entry.delete(0, tk.END) 
-        self.password_entry.delete(0, tk.END)
         self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
 
         if self.user_messenger.error: #Show error msg if cannot create direct messenger
             self.error_msg = tk.Label(self.login_wn, text= self.user_messenger.error, wraplength= 200)
             self.error_msg.grid(row= 3, column= 0, columnspan= 2)
+            self.password_entry.delete(0, tk.END)
             return
 
+        self.name_entry.delete(0, tk.END) 
+        self.password_entry.delete(0, tk.END)
         self.user_profile = Profile(dsuserver= self.ip, username= username, password= password) #Create a user profile and load it
         self.user_profile.load_profile()
         self.start_chat()#Starts up the actual GUI
@@ -77,6 +82,7 @@ class Direct_Messenger_GUI:
                                 sticky= 'nes', pady= 5)
         self.friend_listbox.bind('<<ListboxSelect>>', lambda _ : self.show_history())
 
+        #Adding friends to the listbox
         for friend in self.user_profile.friends:
             self.friend_listbox.insert(tk.END, friend)
 
@@ -93,6 +99,7 @@ class Direct_Messenger_GUI:
         self.msg_box.grid(row= 3, column= 1,
                         sticky= 'news', padx= 5, pady= 5)
 
+        #Scrollbars config
         self.list_box_scrollbard.config(command= self.friend_listbox.yview)
         self.msg_scrollbard.config(command= self.msg_history.yview)
 
@@ -107,13 +114,20 @@ class Direct_Messenger_GUI:
     def show_history(self): #Show the msg history when user's friend is selected
         if self.friend_listbox.size() == 0: return
         name = self.friend_listbox.get(self.friend_listbox.curselection())
+
+        curr_scroll = self.msg_history.yview() #use to keep scrollbar in the same place
+
         self.msg_history.config(state= tk.NORMAL)
         self.msg_history.delete('1.0', tk.END)
-        for msgs in self.user_profile.friends[name]:
+
+        for msgs in self.user_profile.friends[name]: #Show the chat logs
             msg = msgs['message']
             sender = msgs['from']
             self.msg_history.insert(tk.END, f'{sender}: {msg}\n\n')
+
         self.msg_history.config(state= tk.DISABLED)
+
+        self.msg_history.yview_moveto(curr_scroll[0])
 
     def add_friend_popup(self): #Create a pop for user to enter friend's usernamme
         self.add_friend_wn = tk.Toplevel(master= self.master)
@@ -121,14 +135,25 @@ class Direct_Messenger_GUI:
         self.add_friend_wn.resizable(0,0)
         self.add_friend_label = tk.Label(master= self.add_friend_wn, text= 'Friend: ')
         self.add_friend_label.grid(row= 0, column= 0)
+
         self.add_friend_entry = tk.Entry(master= self.add_friend_wn)
         self.add_friend_entry.grid(row= 0, column= 1)
+
         self.add_friend_button = tk.Button(master= self.add_friend_wn, text= 'Add', command= self.add_friend)
         self.add_friend_button.grid(row= 1, column= 0, columnspan= 2)
 
     def add_friend(self): #Add the friend to profile and listbox
         friend = self.add_friend_entry.get()
         self.add_friend_entry.delete(0, tk.END)
+
+        if friend == self.user_profile.username: #Check if user is trying to add themself
+            error_popup = tk.Toplevel(master= self.master)
+            error_label = tk.Label(master=error_popup, text= 'Cannot add yourself')
+            error_label.grid(row= 0, column= 0)
+            ok_button = tk.Button(master= error_popup, text= 'OK', command= error_popup.destroy)
+            ok_button.grid(row= 1, column= 0, columnspan= 2)
+            return
+
         if friend not in self.user_profile.friends:
             self.add_friend_wn.destroy()
             self.friend_listbox.insert(tk.END, friend)

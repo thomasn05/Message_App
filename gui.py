@@ -120,9 +120,10 @@ class Direct_Messenger_GUI:
         self.msg_history.config(state= tk.NORMAL)
         self.msg_history.delete('1.0', tk.END)
 
+        msgs : dm.DirectMessage
         for msgs in self.user_profile.friends[name]: #Show the chat logs
-            msg = msgs['message']
-            sender = msgs['from']
+            msg = msgs.message
+            sender = msgs.sender
             self.msg_history.insert(tk.END, f'{sender}: {msg}\n\n')
 
         self.msg_history.config(state= tk.DISABLED)

@@ -63,7 +63,6 @@ class DirectMessenger:
         # must return true if message successfully sent, false if send failed.
         curr_time = time()
         json_msg = {"token" : self.token, "directmessage": {"entry" : message,"recipient": recipient, "timestamp": curr_time}}
-        msg_obj = DirectMessage(recipient, self.username, message, curr_time)
 
         response = self.__server_send(json_msg)
         

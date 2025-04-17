@@ -1,9 +1,8 @@
-import json
-from pathlib import Path
 from ds_messenger import DirectMessage
 import psycopg2
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 class DsuFileError(Exception):
     pass
@@ -97,13 +96,17 @@ class Profile:
         if username not in self.friends:
             self.friends[username] = []
 
+        self.cursor.execute("""
+            INSERT INTO friends (username, friend) VALUES (%s, %s)
+            ON CONFLICT (username, friend) DO NOTHING;
+        """, (self.username, username))
+
     def add_direct_message(self, direct_msg : DirectMessage) -> None:
-        if direct_msg.sender == self.username:
-            friend = direct_msg.recipient
-        else:
-            friend = direct_msg.sender
-        self.friends[friend].append(DirectMessage(
-            recipient= direct_msg.recipient, 
-            sender= direct_msg.sender, 
-            message= direct_msg.message, 
-            timestamp= direct_msg.timestamp))
+        friend = direct_msg.recipient if direct_msg.sender == self.username else direct_msg.sender
+        self.friends[friend].append(DirectMessage(direct_msg.recipient, direct_msg.sender, direct_msg.message, direct_msg.timestamp))
+
+        time = datetime.fromtimestamp(float(direct_msg.timestamp)).strftime('%Y-%m-%d %H:%M')
+        self.cursor.execute("""
+            INSERT INTO messages (sender, recipient, message, timestamp) VALUES (%s, %s, %s, %s);
+        """, (direct_msg.sender, direct_msg.recipient, direct_msg.message, time))
+            

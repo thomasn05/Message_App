@@ -33,7 +33,6 @@ class Profile:
             self.cursor = self.conn.cursor()
 
             self.__create_tables()
-            self.__add_user()
         
         except Exception as ex:
             raise DsuProfileError("Error while attempting to connect to the database.", ex)
@@ -70,41 +69,41 @@ class Profile:
             ON CONFLICT (username) DO NOTHING;
         """, (self.username, self.password))
 
+    def load_profile(self):
+        self.__add_user()
 
+        self.load_friends()
+
+        self.load_messages()
+
+    def load_friends(self):
+        self.cursor.execute("""
+            SELECT friend FROM friends WHERE username = %s;
+        """, (self.username,))
+        friends = self.cursor.fetchall()
+        for friend in friends:
+            self.friends[friend[0]] = []
+    
+    def load_messages(self):
+        self.cursor.execute("""
+            SELECT sender, recipient, message, timestamp FROM messages WHERE sender = %s OR recipient = %s;
+            """, (self.username, self.username))
+        for sender, recipient, message, timestamp in self.cursor.fetchall():
+            friend = recipient if sender == self.username else sender
+            direct_msg = DirectMessage(recipient, sender, message, timestamp)
+            self.friends[friend].append(direct_msg)
 
     def add_friend(self, username : str) -> None:
         if username not in self.friends:
             self.friends[username] = []
-            self.save_profile()
 
     def add_direct_message(self, direct_msg : DirectMessage) -> None:
         if direct_msg.sender == self.username:
             friend = direct_msg.recipient
         else:
             friend = direct_msg.sender
-        self.friends[friend].append({'from': direct_msg.sender, 'to': direct_msg.recipient, 'message' : direct_msg.message, 'time' : direct_msg.timestamp})
-        self.save_profile()
-
-    def save_profile(self) -> None:
-        p = Path(self.path)
-
-        try:
-            f = open(p, 'w')
-            json.dump(self.__dict__, f)
-            f.close()
-        except Exception as ex:
-            raise DsuFileError("Error while attempting to process the DSU file.", ex)
-
-    def load_profile(self) -> bool:
-        p = Path(self.path)
-
-        if p.exists():
-            f = open(p, 'r')
-            obj = json.load(f)
-            self.username = obj['username']
-            self.password = obj['password']
-            self.dsuserver = obj['dsuserver']
-            self.friends = obj['friends']
-            f.close()
-            return 1
-        return 0
+        self.friends[friend].append(DirectMessage(
+            recipient= direct_msg.recipient, 
+            sender= direct_msg.sender, 
+            message= direct_msg.message, 
+            timestamp= direct_msg.timestamp))

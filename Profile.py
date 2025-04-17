@@ -2,7 +2,6 @@ from ds_messenger import DirectMessage
 import psycopg2
 import os
 from dotenv import load_dotenv
-from datetime import datetime
 
 class DsuFileError(Exception):
     pass
@@ -58,7 +57,7 @@ class Profile:
                 sender VARCHAR NOT NULL,
                 recipient VARCHAR NOT NULL,
                 message TEXT NOT NULL,
-                timestamp TIMESTAMP
+                timestamp REAL NOT NULL
             );
         """)
 
@@ -105,8 +104,7 @@ class Profile:
         friend = direct_msg.recipient if direct_msg.sender == self.username else direct_msg.sender
         self.friends[friend].append(DirectMessage(direct_msg.recipient, direct_msg.sender, direct_msg.message, direct_msg.timestamp))
 
-        time = datetime.fromtimestamp(float(direct_msg.timestamp)).strftime('%Y-%m-%d %H:%M')
         self.cursor.execute("""
             INSERT INTO messages (sender, recipient, message, timestamp) VALUES (%s, %s, %s, %s);
-        """, (direct_msg.sender, direct_msg.recipient, direct_msg.message, time))
+        """, (direct_msg.sender, direct_msg.recipient, direct_msg.message, direct_msg.timestamp))
             

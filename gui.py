@@ -124,7 +124,10 @@ class Direct_Messenger_GUI:
         for msgs in self.user_profile.friends[name]: #Show the chat logs
             msg = msgs.message
             sender = msgs.sender
-            self.msg_history.insert(tk.END, f'{sender}: {msg}\n\n')
+            time = t.strftime('%Y-%m-%d %I:%M %p', t.localtime(msgs.timestamp)) #Convert timestamp to readable format
+            line = f"{time} {sender}: {msg}\n\n"
+
+            self.msg_history.insert(tk.END, line)
 
         self.msg_history.config(state= tk.DISABLED)
 

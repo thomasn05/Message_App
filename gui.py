@@ -120,12 +120,12 @@ class Direct_Messenger_GUI:
         for d in self.user_profile.get_messages(friend= name): #Get the msg history from the profile
             msg = d.message
             sender = d.sender
-            time = dt.fromtimestamp(d.timestamp).strftime('%A %H:%M')
+            time = d.timestamp.strftime('%A %H:%M')
             if sender == self.user_profile.username:
-                formatted_msg = f"{sender} @ {time}\n{d}\n\n"
+                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
                 self.msg_history.insert(tk.END, formatted_msg, "right")
             else:
-                formatted_msg = f"{sender} @ {time}\n{d}\n\n"
+                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
                 self.msg_history.insert(tk.END, formatted_msg, "left")
 
         self.msg_history.config(state= tk.DISABLED)

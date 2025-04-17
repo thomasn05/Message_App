@@ -1,6 +1,7 @@
 from ds_messenger import DirectMessage
 import psycopg2
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 
 
@@ -69,12 +70,12 @@ class Profile:
         self.cursor.execute("""
         INSERT INTO friends (username, friend) 
         VALUES (%s, %s) 
-        ON CONLFICT DO NOTHING""", (self.username, friend))
+        ON CONFLICT DO NOTHING""", (self.username, friend))
 
     def add_direct_message(self, direct_msg : DirectMessage) -> None:
         self.cursor.execute("""
         INSERT INTO messages (sender, recipient, message, timestamp)
-        VALUES (%s, %s, %s, %s)""", (direct_msg.sender, direct_msg.recipient, direct_msg.message, direct_msg.timestamp))
+        VALUES (%s, %s, %s, %s)""", (direct_msg.sender, direct_msg.recipient, direct_msg.message, datetime.fromtimestamp(direct_msg.timestamp)))
 
     def __add_user(self) -> None:
         self.cursor.execute("""

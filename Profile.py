@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from ds_messenger import DirectMessage
 import psycopg2
 import os
@@ -37,6 +35,7 @@ class Profile:
             self.conn.autocommit = True
             self.cursor = self.conn.cursor()
             self.__create_tables()
+            self.__add_user()
         except Exception as e:
             raise DsuFileError("Error while attempting to connect to the database.", e)
 
@@ -77,7 +76,7 @@ class Profile:
         INSERT INTO messages (sender, recipient, message, timestamp)
         VALUES (%s, %s, %s, %s)""", (direct_msg.sender, direct_msg.recipient, direct_msg.message, direct_msg.timestamp))
 
-    def save_profile(self) -> None:
+    def __add_user(self) -> None:
         self.cursor.execute("""
         INSERT INTO users (username, password)
         VALUES (%s, %s)

@@ -184,7 +184,6 @@ class Direct_Messenger_GUI:
             if sender not in self.user_profile.get_friends():
                 self.friend_listbox.insert(tk.END, sender)
                 self.user_profile.add_friend(friend= sender)
-            self.user_profile.add_direct_message(direct_msg= msg)
 
         selection = self.friend_listbox.curselection()
         if self.friend_listbox.size() > 0 and selection:

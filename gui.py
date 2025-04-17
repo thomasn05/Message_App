@@ -113,7 +113,10 @@ class Direct_Messenger_GUI:
 
     def show_history(self): #Show the msg history when user's friend is selected
         if self.friend_listbox.size() == 0: return
-        name = self.friend_listbox.get(self.friend_listbox.curselection())
+
+        selection = self.friend_listbox.curselection()
+        if not selection: return
+        name = self.friend_listbox.get(selection)
 
         curr_scroll = self.msg_history.yview() #use to keep scrollbar in the same place
 
@@ -196,8 +199,7 @@ class Direct_Messenger_GUI:
         for msg in direct_msgs:
             self.user_profile.add_friend(username= msg.sender)
             self.user_profile.add_direct_message(direct_msg= msg)
-        if self.friend_listbox.curselection(): #update the current msg_history if any is selected
-            self.show_history()
+        self.show_history()
 
 def main():
     wn = tk.Tk()

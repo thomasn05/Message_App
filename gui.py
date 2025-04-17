@@ -120,13 +120,13 @@ class Direct_Messenger_GUI:
         for d in self.user_profile.get_messages(friend= name): #Get the msg history from the profile
             msg = d.message
             sender = d.sender
-            time = dt.fromtimestamp(d.timestamp).strftime('%A %H:%M')
+            time = d.timestamp.strftime('%A %H:%M')
             if sender == self.user_profile.username:
-                formatted_msg = f"{sender} @ {time}\n{d}\n\n"
+                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
                 self.msg_history.insert(tk.END, formatted_msg, "right")
-        else:
-            formatted_msg = f"{sender} @ {time}\n{d}\n\n"
-            self.msg_history.insert(tk.END, formatted_msg, "left")
+            else:
+                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
+                self.msg_history.insert(tk.END, formatted_msg, "left")
 
         self.msg_history.config(state= tk.DISABLED)
 
@@ -143,11 +143,19 @@ class Direct_Messenger_GUI:
 
     def add_friend(self): #Add the friend to profile and listbox
         friend = self.add_friend_entry.get()
+        if friend == self.user_profile.username: #Check if user is trying to add himself
+            error_popup = tk.Toplevel(master= self.master)
+            error_label = tk.Label(master=error_popup, text= 'Cannot add yourself')
+            error_label.grid(row= 0, column= 0)
+            ok_button = tk.Button(master= error_popup, text= 'OK', command= error_popup.destroy)
+            ok_button.grid(row= 1, column= 0, columnspan= 2)
+            return
+
         self.add_friend_entry.delete(0, tk.END)
-        if friend not in self.user_profile.get_friends:
+        if friend not in self.user_profile.get_friends():
             self.add_friend_wn.destroy()
             self.friend_listbox.insert(tk.END, friend)
-            self.user_profile.add_friend(username= friend)
+            self.user_profile.add_friend(friend= friend)
     
     def send_msg(self): #send the msg to other user
         msg = self.msg_box.get('1.0', 'end-1c')
@@ -183,8 +191,7 @@ class Direct_Messenger_GUI:
             sender = msg.sender
             if sender not in self.user_profile.get_friends():
                 self.friend_listbox.insert(tk.END, sender)
-                self.user_profile.add_friend(username= sender)
-            self.user_profile.add_direct_message(direct_msg= msg)
+                self.user_profile.add_friend(friend= sender)
 
         selection = self.friend_listbox.curselection()
         if self.friend_listbox.size() > 0 and selection:

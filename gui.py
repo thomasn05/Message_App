@@ -143,6 +143,14 @@ class Direct_Messenger_GUI:
 
     def add_friend(self): #Add the friend to profile and listbox
         friend = self.add_friend_entry.get()
+        if friend == self.user_profile.username: #Check if user is trying to add himself
+            error_popup = tk.Toplevel(master= self.master)
+            error_label = tk.Label(master=error_popup, text= 'Cannot add yourself')
+            error_label.grid(row= 0, column= 0)
+            ok_button = tk.Button(master= error_popup, text= 'OK', command= error_popup.destroy)
+            ok_button.grid(row= 1, column= 0, columnspan= 2)
+            return
+
         self.add_friend_entry.delete(0, tk.END)
         if friend not in self.user_profile.get_friends():
             self.add_friend_wn.destroy()

@@ -2,7 +2,6 @@ import json
 from collections import namedtuple
 
 # Namedtuple to hold the values retrieved from json messages.
-# TODO: update this named tuple to use DSP protocol keys
 DataTuple = namedtuple('DataTuple', ['type','message', 'token'])
 
 def extract_json(json_msg:str) -> DataTuple:

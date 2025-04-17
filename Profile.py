@@ -44,7 +44,7 @@ class Profile:
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username VARCHAR PRIMARY KEY,
-            password VARCHAR NOT NULL,
+            password VARCHAR NOT NULL
         );
         """)
 
@@ -54,7 +54,7 @@ class Profile:
             friend VARCHAR,
             PRIMARY KEY (username, friend)
         );
-        """)
+""")
 
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (

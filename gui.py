@@ -2,7 +2,6 @@ import tkinter as tk
 import ds_messenger as dm
 from Profile import Profile
 import time as t
-from datetime import datetime as dt
 
 class Friends:
     def __init__(self, name : str, messages : list[dict]) -> None:
@@ -15,43 +14,44 @@ class Friends:
 class Direct_Messenger_GUI:
     def __init__(self, master : tk.Tk) -> None:
         self.master = master
-        self.ip = "168.235.86.101"
-        self.unread_msgs = {}
 
         #creating login screen
         self.master.withdraw()
         self.login_wn = tk.Toplevel(master= self.master)
         self.login_wn.title('Login')
         self.login_wn.resizable(0,0)
-        self.login_wn.geometry('200x100')
+        self.login_wn.geometry('200x120')
         self.login_wn.bind('<Escape>', func= lambda _: self.master.quit())
 
         #Creating widget
         self.name = tk.Label(self.login_wn, text= 'Username: ')
         self.password = tk.Label(self.login_wn, text= 'Password: ')
+        self.ip = tk.Label(self.login_wn, text= 'Server IP:')
         self.name_entry = tk.Entry(self.login_wn, )
         self.password_entry = tk.Entry(self.login_wn, show= '*')
+        self.ip_entry = tk.Entry(self.login_wn)
         self.login_button = tk.Button(self.login_wn, text= 'Login', command= self.create_user)
 
         #placing widget
         widget : tk.Widget
         count : int
         for count, widget in enumerate(self.login_wn.winfo_children()):
-            widget.grid(row= count % 2, column= count //2)
-        self.login_button.grid(row= 2, column= 0, columnspan= 2)
+            widget.grid(row= count % 3, column= count //3)
+        self.login_button.grid(row= 3, column= 0, columnspan= 2)
 
     def create_user(self): #Getting the info from login screen and create messenger and profile 
-        username, password = self.name_entry.get(), self.password_entry.get()
-        self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
-
-        if self.user_messenger.error: #Show error msg if cannot create direct messenger
-            self.error_msg = tk.Label(self.login_wn, text= self.user_messenger.error, wraplength= 200)
-            self.error_msg.grid(row= 3, column= 0, columnspan= 2)
-            return
-
+        username, password, ip = self.name_entry.get(), self.password_entry.get(), self.ip_entry.get()
         self.name_entry.delete(0, tk.END) 
         self.password_entry.delete(0, tk.END)
-        self.user_profile = Profile(dsuserver= self.ip, username= username, password= password) #Create a user profile and load it
+        self.ip_entry.delete(0, tk.END)
+        self.user_messenger = dm.DirectMessenger(dsuserver= ip, username= username, password= password)
+
+        if self.user_messenger.error: #Show error msg if cannot create direct messenger
+            self.error_msg = tk.Label(self.login_wn, text= self.user_messenger.error)
+            self.error_msg.grid(row= 4, column= 0, columnspan= 2)
+            return
+
+        self.user_profile = Profile(dsuserver= ip, username= username, password= password) #Create a user profile and load it
         self.user_profile.load_profile()
         self.start_chat()#Starts up the actual GUI
 
@@ -88,9 +88,6 @@ class Direct_Messenger_GUI:
         self.msg_history.grid(row= 0, rowspan= 3, column= 1, 
                             sticky= 'ns',padx= 2,  pady= 5)
         self.msg_history.config(state= tk.DISABLED)
-        self.msg_history.tag_configure("right", justify="right")
-        self.msg_history.tag_configure("left", justify="left")
-
 
         #message box
         self.msg_box = tk.Text(self.master, wrap= tk.WORD, height= 5, width= 40,
@@ -107,23 +104,17 @@ class Direct_Messenger_GUI:
         self.send_button = tk.Button(self.master, text= 'Send', width= 15, command= self.send_msg)
         self.send_button.grid(row= 4, column= 1, sticky= 'nes', padx= 5, pady= 3)
 
-        self.master.after(1000, self.__update_user)
+        self.master.after(1000, self.__update_new_msg)
 
-    def show_history(self, name = ""): #Show the msg history when user's friend is selected
-        if not name: return
+    def show_history(self): #Show the msg history when user's friend is selected
+        if self.friend_listbox.size() == 0: return
+        name = self.friend_listbox.get(self.friend_listbox.curselection())
         self.msg_history.config(state= tk.NORMAL)
         self.msg_history.delete('1.0', tk.END)
         for msgs in self.user_profile.friends[name]:
             msg = msgs['message']
             sender = msgs['from']
-            time = dt.fromtimestamp(msgs['time']).strftime('%A %H:%M')
-            if sender == self.user_profile.username:
-                formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
-                self.msg_history.insert(tk.END, formatted_msg, "right")
-        else:
-            formatted_msg = f"{sender} @ {time}\n{msg}\n\n"
-            self.msg_history.insert(tk.END, formatted_msg, "left")
-
+            self.msg_history.insert(tk.END, f'{sender}: {msg}\n\n')
         self.msg_history.config(state= tk.DISABLED)
 
     def add_friend_popup(self): #Create a pop for user to enter friend's usernamme
@@ -168,25 +159,18 @@ class Direct_Messenger_GUI:
         
         self.msg_box.delete('1.0', tk.END)
 
-    def __update_user(self): #Get new messages to update
+    def __update_new_msg(self): #Get new messages to update
         new_msgs = self.user_messenger.retrieve_new()
         self.__add_DirectMessage(direct_msgs= new_msgs)
-        self.master.after(1000, self.__update_user) #recursive call the function to keep getting new msg
+        self.master.after(1000, self.__update_new_msg) #recursive call the function to keep getting new msg
 
     
     def __add_DirectMessage(self, direct_msgs : list[dm.DirectMessage]): #Add new msg to user profile
         for msg in direct_msgs:
-            sender = msg.sender
-            if sender not in self.user_profile.friends:
-                self.friend_listbox.insert(tk.END, sender)
-                self.user_profile.add_friend(username= sender)
+            self.user_profile.add_friend(username= msg.sender)
             self.user_profile.add_direct_message(direct_msg= msg)
-
-        selection = self.friend_listbox.curselection()
-        if self.friend_listbox.size() > 0 and selection:
-            name = self.friend_listbox.get(selection)
-            self.show_history(name) #Load the chat logs of the selected friend
-        #upda
+        if self.friend_listbox.curselection(): #update the current msg_history if any is selected
+            self.show_history()
 
 def main():
     wn = tk.Tk()

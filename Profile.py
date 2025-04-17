@@ -1,3 +1,19 @@
+# Profile.py
+#
+# ICS 32
+# Assignment #2: Journal
+#
+# Author: Mark S. Baldwin, modified by Alberto Krone-Martins
+#
+# v0.1.9
+
+# You should review this code to identify what features you need to support
+# in your program for assignment 2.
+#
+# YOU DO NOT NEED TO READ OR UNDERSTAND THE JSON SERIALIZATION ASPECTS OF THIS CODE 
+# RIGHT NOW, though can you certainly take a look at it if you are curious since we 
+# already covered a bit of the JSON format in class.
+#
 import json
 from pathlib import Path
 from ds_messenger import DirectMessage

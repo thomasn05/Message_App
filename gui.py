@@ -16,44 +16,90 @@ class Friends:
 
 
 class Direct_Messenger_GUI:
-    def __init__(self, master : tk.Tk) -> None:
+    def __init__(self, master: tk.Tk) -> None:
         self.master = master
         self.ip = "168.235.86.101"
 
-        #creating login screen
         self.master.withdraw()
-        self.login_wn = tk.Toplevel(master= self.master)
+        self.auth_window = tk.Toplevel(master=self.master)
+        self.auth_window.title('Welcome')
+        self.auth_window.geometry('250x150')
+        self.auth_window.resizable(False, False)
+        
+
+        tk.Label(self.auth_window, text="Welcome to Direct Messenger!", font=("Arial", 12)).pack(pady=10)
+
+        tk.Button(self.auth_window, text="Login", width=15, command=self.__login_screen).pack(pady=5)
+        tk.Button(self.auth_window, text="Create Account", width=15, command=self.__create_account_screen).pack(pady=5)
+
+        self.auth_window.bind('<Escape>', lambda _: self.master.quit())
+
+
+    def __login_screen(self):
+        self.auth_window.destroy()
+        self.login_wn = tk.Toplevel(master=self.master)
         self.login_wn.title('Login')
-        self.login_wn.resizable(0,0)
-        self.login_wn.geometry('200x120')
-        self.login_wn.bind('<Escape>', func= lambda _: self.master.quit())
+        self.login_wn.geometry('250x130')
+        self.login_wn.resizable(False, False)
 
-        #Creating widget
-        self.name = tk.Label(self.login_wn, text= 'Username: ')
-        self.password = tk.Label(self.login_wn, text= 'Password: ')
-        self.name_entry = tk.Entry(self.login_wn, )
-        self.password_entry = tk.Entry(self.login_wn, show= '*')
-        self.login_button = tk.Button(self.login_wn, text= 'Login', command= self.create_user)
+        tk.Label(self.login_wn, text='Username:').grid(row=0, column=0, padx=5, pady=5)
+        self.name_entry = tk.Entry(self.login_wn)
+        self.name_entry.grid(row=0, column=1)
 
-        #placing widget
-        widget : tk.Widget
-        count : int
-        for count, widget in enumerate(self.login_wn.winfo_children()):
-            widget.grid(row= count % 2, column= count //2)
-        self.login_button.grid(row= 2, column= 0, columnspan= 2)
+        tk.Label(self.login_wn, text='Password:').grid(row=1, column=0, padx=5, pady=5)
+        self.password_entry = tk.Entry(self.login_wn, show='*')
+        self.password_entry.grid(row=1, column=1)
 
-    def create_user(self): #Getting the info from login screen and create messenger and profile 
+        tk.Button(self.login_wn, text='Login', command=self.check_login).grid(row=2, column=0, columnspan=2, pady=10)
+
+    def __create_account_screen(self):
+        self.auth_window.destroy()
+        self.create_wn = tk.Toplevel(master=self.master)
+        self.create_wn.title('Create Account')
+        self.create_wn.geometry('280x200')
+        self.create_wn.resizable(False, False)
+
+        tk.Label(self.create_wn, text='Username:').grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        self.new_username = tk.Entry(self.create_wn)
+        self.new_username.grid(row=0, column=1, padx=5)
+
+        tk.Label(self.create_wn, text='Password:').grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        self.new_password = tk.Entry(self.create_wn, show='*')
+        self.new_password.grid(row=1, column=1, padx=5)
+
+        tk.Label(self.create_wn, text='Confirm Password:').grid(row=2, column=0, padx=5, pady=5, sticky="e")
+        self.confirm_password = tk.Entry(self.create_wn, show='*')
+        self.confirm_password.grid(row=2, column=1, padx=5)
+
+        self.create_error_label = tk.Label(self.create_wn, text="", fg="red")
+        self.create_error_label.grid(row=3, column=0, columnspan=2)
+
+        tk.Button(self.create_wn, text='Create', command=self.check_create_user).grid(row=4, column=0, columnspan=2, pady=10)
+
+    def check_create_user(self): #Check if the username is already taken and if the password is valid
+        username = self.new_username.get()
+        password = self.new_password.get()
+        confirm_password = self.confirm_password.get()
+
+        if password != confirm_password:
+            self.create_error_label.config(text="Passwords do not match")
+            self.new_password.delete(0, tk.END)
+            self.confirm_password.delete(0, tk.END)
+            return
+
+        self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
+        self.start_chat()
+
+    def check_login(self): #Getting the info from login screen and create messenger and profile 
         username, password = self.name_entry.get(), self.password_entry.get()
         self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
 
         if self.user_messenger.error: #Show error msg if cannot create direct messenger
-            self.error_msg = tk.Label(self.login_wn, text= self.user_messenger.error, wraplength= 200)
+            self.error_msg = tk.Label(self.login_wn, text= 'Invalid Password', wraplength= 200)
             self.error_msg.grid(row= 3, column= 0, columnspan= 2)
             self.password_entry.delete(0, tk.END)
             return
 
-        self.name_entry.delete(0, tk.END) 
-        self.password_entry.delete(0, tk.END)
         self.user_profile = Profile(dsuserver= self.ip, username= username, password= password) #Create a user profile and load it
         self.user_profile.load_profile()
         self.start_chat()#Starts up the actual GUI

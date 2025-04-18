@@ -25,7 +25,6 @@ class Direct_Messenger_GUI:
         self.auth_window.title('Welcome')
         self.auth_window.geometry('250x150')
         self.auth_window.resizable(False, False)
-        
 
         tk.Label(self.auth_window, text="Welcome to Direct Messenger!", font=("Arial", 12)).pack(pady=10)
 
@@ -33,7 +32,7 @@ class Direct_Messenger_GUI:
         tk.Button(self.auth_window, text="Create Account", width=15, command=self.__create_account_screen).pack(pady=5)
 
         self.auth_window.bind('<Escape>', lambda _: self.master.quit())
-
+        self.auth_window.protocol("WM_DELETE_WINDOW", self.master.quit)
 
     def __login_screen(self):
         self.auth_window.destroy()
@@ -41,6 +40,8 @@ class Direct_Messenger_GUI:
         self.login_wn.title('Login')
         self.login_wn.geometry('250x130')
         self.login_wn.resizable(False, False)
+        self.login_wn.protocol("WM_DELETE_WINDOW", self.master.quit)
+        self.login_wn.bind('<Escape>', lambda _: self.master.quit())
 
         tk.Label(self.login_wn, text='Username:').grid(row=0, column=0, padx=5, pady=5)
         self.name_entry = tk.Entry(self.login_wn)
@@ -58,6 +59,8 @@ class Direct_Messenger_GUI:
         self.create_wn.title('Create Account')
         self.create_wn.geometry('280x200')
         self.create_wn.resizable(False, False)
+        self.create_wn.protocol("WM_DELETE_WINDOW", self.master.quit)
+        self.create_wn.bind('<Escape>', lambda _: self.master.quit())
 
         tk.Label(self.create_wn, text='Username:').grid(row=0, column=0, padx=5, pady=5, sticky="e")
         self.new_username = tk.Entry(self.create_wn)
@@ -71,8 +74,8 @@ class Direct_Messenger_GUI:
         self.confirm_password = tk.Entry(self.create_wn, show='*')
         self.confirm_password.grid(row=2, column=1, padx=5)
 
-        self.create_error_label = tk.Label(self.create_wn, text="", fg="red")
-        self.create_error_label.grid(row=3, column=0, columnspan=2)
+        self.error_msg = tk.Label(self.create_wn, text="", fg="red")
+        self.error_msg.grid(row=3, column=0, columnspan=2)
 
         tk.Button(self.create_wn, text='Create', command=self.check_create_user).grid(row=4, column=0, columnspan=2, pady=10)
 
@@ -82,32 +85,46 @@ class Direct_Messenger_GUI:
         confirm_password = self.confirm_password.get()
 
         if password != confirm_password:
-            self.create_error_label.config(text="Passwords do not match")
+            self.error_msg.config(text="Passwords do not match")
             self.new_password.delete(0, tk.END)
             self.confirm_password.delete(0, tk.END)
             return
 
-        self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
-        self.start_chat()
+        if self.create_profile(username=username, password=password):
+
+            self.create_wn.destroy()
+            self.start_chat()
+        else:
+            self.error_msg.config(text="Username already taken")
+            self.new_username.delete(0, tk.END)
+            self.new_password.delete(0, tk.END)
+            self.confirm_password.delete(0, tk.END)
+            return
 
     def check_login(self): #Getting the info from login screen and create messenger and profile 
         username, password = self.name_entry.get(), self.password_entry.get()
-        self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
-
-        if self.user_messenger.error: #Show error msg if cannot create direct messenger
-            self.error_msg = tk.Label(self.login_wn, text= 'Invalid Password', wraplength= 200)
+        
+        if (self.create_profile(username= username, password= password)):
+            self.login_wn.destroy()
+            self.start_chat()
+        else:
+            self.error_msg = tk.Label(self.login_wn, text= 'Invalid password', fg= 'red')
             self.error_msg.grid(row= 3, column= 0, columnspan= 2)
             self.password_entry.delete(0, tk.END)
-            return
 
-        self.user_profile = Profile(dsuserver= self.ip, username= username, password= password) #Create a user profile and load it
-        self.user_profile.load_profile()
-        self.start_chat()#Starts up the actual GUI
+    def create_profile(self, username, password) -> bool: #Create a profile for the user
+        self.user_messenger = dm.DirectMessenger(dsuserver= self.ip, username= username, password= password)
+        if self.user_messenger.error:
+            return False
+        
+        else:
+            self.user_profile = Profile(dsuserver= self.ip, username= self.user_messenger.username, password= self.user_messenger.password)
+            self.user_profile.load_profile()
+            return True
 
     def start_chat(self): #Actual chat GUI
         #GUI Config
         self.master.deiconify()
-        self.login_wn.destroy()
         self.master.title(f'Login in as: {self.user_profile.username}')
         self.master.geometry("720x480")
         self.master.rowconfigure((0, 4), weight= 1)

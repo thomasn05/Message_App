@@ -69,10 +69,11 @@ class Direct_Messenger_GUI:
         self.master.columnconfigure(0, weight= 1)
         self.master.columnconfigure(1, weight= 2)
 
+        #Labels for friend list and chat log
         self.friend_list_label = tk.Label(self.master, text='Friends', font= ('Arial', 12, 'bold'))
         self.friend_list_label.grid(row=0, column=0, sticky='n', padx=5, pady=5)
-        self.chat_with_label = tk.Label(self.master, text='Chat Log', font= ('Arial', 12, 'bold'))
-        self.chat_with_label.grid(row=0, column=1, sticky='n', padx=5, pady=5)
+        self.chat_log_label = tk.Label(self.master, text='Chat Log', font= ('Arial', 12, 'bold'))
+        self.chat_log_label.grid(row=0, column=1, sticky='n', padx=5, pady=5)
 
         #scrollbars
         self.list_box_scrollbard = tk.Scrollbar(self.master, orient= 'vertical', width= 30)
@@ -120,8 +121,9 @@ class Direct_Messenger_GUI:
         if self.friend_listbox.size() == 0: return
 
         selection = self.friend_listbox.curselection()
-        if not selection: return
+        if not selection: return #check if there is a selection
         name = self.friend_listbox.get(selection)
+        self.chat_log_label.config(text= f'Chatting with {name}')
 
         curr_scroll = self.msg_history.yview() #use to keep scrollbar in the same place
 
@@ -166,7 +168,7 @@ class Direct_Messenger_GUI:
             ok_button.grid(row= 1, column= 0, columnspan= 2)
             return
 
-        if friend not in self.user_profile.friends:
+        if friend not in self.user_profile.friends: #Add New friend
             self.add_friend_wn.destroy()
             self.friend_listbox.insert(tk.END, friend)
         self.user_profile.add_friend(username= friend)

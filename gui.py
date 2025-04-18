@@ -62,23 +62,28 @@ class Direct_Messenger_GUI:
         #GUI Config
         self.master.deiconify()
         self.login_wn.destroy()
-        self.master.title('Direct Meseenger Chat')
+        self.master.title(f'Login in as: {self.user_profile.username}')
         self.master.geometry("720x480")
-        self.master.rowconfigure((0, 1, 2, 3), weight= 5)
-        self.master.rowconfigure(4, weight= 1)
+        self.master.rowconfigure((0, 4), weight= 1)
+        self.master.rowconfigure((1, 2, 3), weight= 4)
         self.master.columnconfigure(0, weight= 1)
         self.master.columnconfigure(1, weight= 2)
+
+        self.friend_list_label = tk.Label(self.master, text='Friends', font= ('Arial', 12, 'bold'))
+        self.friend_list_label.grid(row=0, column=0, sticky='n', padx=5, pady=5)
+        self.chat_with_label = tk.Label(self.master, text='Chat Log', font= ('Arial', 12, 'bold'))
+        self.chat_with_label.grid(row=0, column=1, sticky='n', padx=5, pady=5)
 
         #scrollbars
         self.list_box_scrollbard = tk.Scrollbar(self.master, orient= 'vertical', width= 30)
         self.msg_scrollbard = tk.Scrollbar(self.master, orient= 'vertical', width= 30)
-        self.list_box_scrollbard.grid(row=0, rowspan= 4, column= 0, sticky='nsw')
-        self.msg_scrollbard.grid(row= 0, rowspan= 3, column= 1, sticky= 'nse')
+        self.list_box_scrollbard.grid(row=1, rowspan= 3, column= 0, sticky='nsw')
+        self.msg_scrollbard.grid(row= 1, rowspan= 2, column= 1, sticky= 'nse')
 
         #friend list
-        self.friend_listbox = tk.Listbox(self.master, selectmode= tk.SINGLE, width= 30, 
+        self.friend_listbox = tk.Listbox(self.master, selectmode= tk.SINGLE, width= 30, height= 30,
                                         borderwidth= 3, relief= 'raised', yscrollcommand= self.list_box_scrollbard.set)
-        self.friend_listbox.grid(row= 0, rowspan= 4, column= 0, 
+        self.friend_listbox.grid(row= 1, rowspan= 3, column= 0, 
                                 sticky= 'nes', pady= 5)
         self.friend_listbox.bind('<<ListboxSelect>>', lambda _ : self.show_history())
 
@@ -89,7 +94,7 @@ class Direct_Messenger_GUI:
         #messages history
         self.msg_history = tk.Text(self.master, wrap= tk.WORD, height= 5, width= 60, 
                                 borderwidth= 3, relief= 'raised', yscrollcommand= self.msg_scrollbard.set)
-        self.msg_history.grid(row= 0, rowspan= 3, column= 1, 
+        self.msg_history.grid(row= 1, rowspan= 2, column= 1, 
                             sticky= 'ns',padx= 2,  pady= 5)
         self.msg_history.config(state= tk.DISABLED)
 
